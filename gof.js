@@ -1,10 +1,8 @@
-try {
-   var gamejs = require('gamejs');
-} catch (e) {
-   // lets hope we are on serverside
-}
+var gamejs = require('gamejs');
+var SurfaceArray = require('gamejs/surfacearray').SurfaceArray;
+var blitArray = require('gamejs/surfacearray').blitArray;
 
-var CELL_SIZE = 4; // pixel size of cell
+var CELL_SIZE = 5; // pixel size of cell
 
 var DIRS = [
    [1,0],
@@ -64,17 +62,29 @@ exports.Map = function (dims) {
     * Draw game of life map to screen.
     */
    this.draw = function(display) {
-      // optimization: create rect once and modify its position for current cell
-      var pos = new gamejs.Rect([0,0], [CELL_SIZE, CELL_SIZE]);
+      var x, y;
+      var color = null;
+      var m = null;
       for (var i=0; i<H; i++) {
          for (var j=0; j<W; j++) {
-            if (map[i][j].alive === true) {
-               pos.top = i * CELL_SIZE;
-               pos.left = j * CELL_SIZE;
-               gamejs.draw.rect(display, '#ff4444', pos, 0);
+            m = map[i][j];
+            if (m.modified === true) {
+               color = [255, 100, 255];
+               if (m.alive === false) {
+                  color = [255, 255, 255];
+               }
+               y = i * CELL_SIZE;
+               x = j * CELL_SIZE;
+               srfarray.set(x, y, color);
+               srfarray.set(x-1, y-1, color);
+               srfarray.set(x+1, y+1, color);
+               srfarray.set(x-1, y+1, color);
+               srfarray.set(x+1, y-1, color);
+
             }
          }
       }
+      blitArray(display, srfarray);
    };
 
    /**
@@ -87,6 +97,7 @@ exports.Map = function (dims) {
       }
 
       cMap[x][y].alive = alive;
+      cMap[x][y].modified = true;
       for (var i=0; i < DIRS_LENGTH; i++) {
          var dir = DIRS[i];
          var nx = x + dir[0];
@@ -173,5 +184,7 @@ exports.Map = function (dims) {
    var map = [];
    initMap();
    this.random();
+   this.rect = new gamejs.Rect([0,0], [W * CELL_SIZE, H * CELL_SIZE]);
+   var srfarray = SurfaceArray([this.rect.width, this.rect.height]);
    return this;
 };
