@@ -150,7 +150,8 @@ exports.Map = function (dims) {
          for (var j=0; j<W; j++) {
             map[i][j] = {
                alive: false,
-               neighbors: 0
+               neighbors: 0,
+               modified: true
             };
          }
       }
