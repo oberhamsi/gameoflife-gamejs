@@ -8,136 +8,38 @@
  * MOUSE CLICK or MOUSE DRAG
  *    activate cell
  *
- * -----------
- *
- *  For a space that is 'populated':
- *     Each cell with one or no neighbors dies, as if by loneliness.
- *     Each cell with two or three neighbors survives.
- *     Each cell with four or more neighbors dies, as if by overpopulation.
- *
- *  For a space that is 'empty' or 'unpopulated'
- *     Each cell with three neighbors becomes populated.
  */
 
 var gamejs = require('gamejs');
+var Map = require('./gof').Map;
 gamejs.ready(main);
 
-function Map(width, height) {
-   var W = width;
-   var H = height;
-   var CELL_SIZE = 4; // pixel size of cell
-
-   var DIRS = [
-      [1,0],
-      [0,1],
-      [1,1],
-      [-1,0],
-      [0, -1],
-      [-1,-1],
-      [-1,1],
-      [1,-1]
-   ];
-   var DIRS_LENGTH = DIRS.length;
-
-   /**
-    * @returns number of neighbours that are alive
-    */
-   function countNeighbors(x, y) {
-      var count = 0;
-      for (var i=0; i < DIRS_LENGTH; i++) {
-         var dir = DIRS[i];
-         var nx = x + dir[0];
-         var ny = y + dir[1];
-         if (nx < 0 || ny < 0) continue;
-         if (nx >= W || ny >= H) continue;
-         if (!map[nx][ny]) continue;
-
-         count++;
-      }
-      return count;
-   };
-
-   /**
-    * Set cell at mousePos to alive. Transforms passed mouse position
-    * to map position.
-    */
-   this.setAt = function(mousePos) {
-      var x = parseInt(mousePos[1] / CELL_SIZE, 10);
-      var y = parseInt(mousePos[0] / CELL_SIZE, 10);
-      map[x][y] = true;
-   }
-
-   /**
-    * Draw game of life map to screen.
-    */
-   this.draw = function(display) {
-      // optimization: create rect once and modify its position for current cell
-      var pos = new gamejs.Rect([0,0], [CELL_SIZE, CELL_SIZE]);
-      for (var i=0; i<H; i++) {
-         for (var j=0; j<W; j++) {
-            if (map[i][j] === true) {
-               pos.top = i * CELL_SIZE;
-               pos.left = j * CELL_SIZE;
-               gamejs.draw.rect(display, '#666666', pos, 0);
-            }
-         }
-      }
-   };
-
-   /**
-    * Update map according to game of life rules
-    */
-   this.update = function() {
-      var newMap = [];
-      for (var i=0; i<H; i++) {
-         newMap[i] = [];
-         for (var j=0; j<W; j++) {
-            var c = countNeighbors(i, j);
-            if (map[i][j] === true) {
-               if (c <= 1) {
-                  //newMap[i][j] = false;
-               } else if (c <= 3) {
-                  newMap[i][j] = true;
-               } else if (c >= 4) {
-                  //newMap[i][j] = false;
-               }
-            } else {
-               if (c === 3) {
-                  newMap[i][j] = true;
-               } else {
-                  // newMap[i][j] = false;
-               }
-            }
-         }
-      }
-      map = newMap;
-      return this;
-   };
-
-   /**
-    * Constructor randomly sets some cells alive.
-    */
-   var map = [];
-   for (var i=0; i<H; i++) {
-      map[i] = [];
-      for (var j=0; j<W; j++) {
-         map[i][j] = Math.random() < 0.1 ? true : false;
-      }
-   }
-   return this;
+function addClickHandler(elementId, fn) {
+   document.getElementById(elementId).addEventListener('click', fn, false);
+};
+// disable normal browser mouse select
+function disableMouseSelect() {
+   // no text select on drag
+   document.body.style.webkitUserSelect = 'none';
+   // non right clickery
+   document.body.oncontextmenu = function() { return false; };
 }
 
 function main() {
-   var display = gamejs.display.setMode([900, 900])
-   gamejs.time.fpsCallback(tick, this, 10);
 
-   var map = new Map(200, 200);
+   var screen = [
+      Math.max(window.innerWidth - 50, 250),
+      Math.max(window.innerHeight - 200, 250)
+   ];
+   disableMouseSelect();
+   var map = new Map(screen);
+   var display = gamejs.display.setMode(screen)
+   gamejs.time.fpsCallback(tick, this, 8);
 
    /**
     * Keyboard handling
     */
    var isMouseDown = false;
-   var isPaused = false;
    function eventHandler(event) {
       if (event.type === gamejs.event.MOUSE_DOWN) {
          isMouseDown = true;
@@ -148,26 +50,27 @@ function main() {
          if (isMouseDown) {
             map.setAt(event.pos);
          }
-      } else if (event.type === gamejs.event.KEY_UP) {
-         if (event.key === gamejs.event.K_SPACE) {
-            isPaused = !isPaused;
-         } else if ([gamejs.event.K_RIGHT, gamejs.event.K_LEFT].
-            indexOf(event.key) > -1) {
-            if (isPaused) {
-               map.update();
-            }
-         }
       }
    }
 
+   addClickHandler('gof-playpause', function() {
+      map.togglePaused();
+   });
+   addClickHandler('gof-step', function() {
+      map.forceUpdate();
+   });
+   addClickHandler('gof-random', function() {
+      map.random();
+   });
+   addClickHandler('gof-clear', function() {
+      map.clear();
+   });
    /**
     * Every game tick...
     */
    function tick() {
       gamejs.event.get().forEach(eventHandler);
-      if (!isPaused) {
-         map.update();
-      }
+      map.update();
       display.clear();
       map.draw(display);
       return;

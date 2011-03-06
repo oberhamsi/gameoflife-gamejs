@@ -1,0 +1,31 @@
+<% extends './skins/app.html' %>
+<% subskin content %>
+
+<p>
+   <button id="gof-playpause">play | pause</button>
+   <button id="gof-step">step >> </button>
+   <br/>
+   <button id="gof-clear">clear</button>
+   <button id="gof-random">random</button>
+</p>
+<canvas id="jsgamecanvas"></canvas>
+
+  <h3> Click the play button to start.</h3>
+  <h3> Smaller browser window for smaller and faster map.</h3>
+ <h1>Conway's Game of Life</h1>
+ <a href=http://github.com/oberhamsi/gameoflife-gamejs/>@github</a>
+   </p>
+   <script type="text/javascript">
+   (function() {
+     if (document.location.href.indexOf('localhost') != -1) return;
+
+     var stss = document.createElement('script');
+     stss.type = 'text/javascript';
+     stss.async = true;
+     stss.src = 'http://stats.nekapuzer.at/hit/?referer=' + escape(document.referrer) +
+          '&site=gamejs' +
+          '&random=' + (new Date()).getTime();
+     var s = document.getElementsByTagName('script')[0];
+     s.parentNode.insertBefore(stss, s);
+   })();
+    </script>
